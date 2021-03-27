@@ -13,6 +13,8 @@ class loss:
         self.weighted = weighted
         self.slice = slicing(self.stype)
         self.distance = sliced_distance(self.dtype, self.weighted)
+        self.X_projections = None
+        self.Y_projections = None
     
     def compute(self, X, Y, weights=None, projections=None, num_projections=1000, r=1, f=None, f_op=None, lam=1, iter=100, device='cuda'):
         if self.ftype == 'sliced':
@@ -28,16 +30,16 @@ class loss:
         return d
 
     def compute_sliced_distance(self, X, Y, weights=None, projections=None, num_projections=1000, r=1, device='cuda'):
-        X_projections, Y_projections = self.slice.get_slice(X, Y, projections=projections, num_projections=num_projections, r=r, device=device)
+        self.X_projections, self.Y_projections = self.slice.get_slice(X, Y, projections=projections, num_projections=num_projections, r=r, device=device)
         # print("X_proj={}".format(X_projections[:10]))
         # print('y_proj={}'.format(Y_projections[:10]))
         # print('proj={}'.format(projections[:10]))
         if self.weighted :
             assert(weights is not None)
-            d = self.distance.compute(X_projections, Y_projections, weights, 2)
+            d = self.distance.compute(self.X_projections, self.Y_projections, weights, 2)
         else:
             assert(weights is None)
-            d = self.distance.compute(X_projections, Y_projections, 2)
+            d = self.distance.compute(self.X_projections, self.Y_projections, 2)
         return d
 
     def compute_max_sliced_distance(self, X, Y, weights=None, projections=None, r=1, iter=100, device='cuda'):
