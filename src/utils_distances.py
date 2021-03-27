@@ -38,12 +38,12 @@ class sliced_distance:
 def w2_distance(X_projections, Y_projections, p):
     # X_projections = X.matmul(projections.t())
     # Y_projections = Y.matmul(projections.t())
-#     X_projections_sorted = torch.sort(X_projections, dim=0)[0]
-#     Y_projections_sorted = torch.sort(Y_projections, dim=0)[0]
-#     wasserstein_distance = torch.abs((X_projections_sorted -
-#                                     Y_projections_sorted ))
-    wasserstein_distance = torch.abs((torch.sort(X_projections, dim=0)[0] -
-                                    torch.sort(Y_projections, dim=0)[0] ))
+    X_projections_sorted = torch.sort(X_projections, dim=0)[0]
+    Y_projections_sorted = torch.sort(Y_projections, dim=0)[0]
+    wasserstein_distance = torch.abs((X_projections_sorted -
+                                    Y_projections_sorted ))
+#     wasserstein_distance = torch.abs((torch.sort(X_projections, dim=0)[0] -
+#                                     torch.sort(Y_projections, dim=0)[0] ))
     wasserstein_distance = torch.pow(torch.sum(torch.pow(wasserstein_distance, p), dim=0), 1. / p)
     wasserstein_distance = torch.pow(torch.pow(wasserstein_distance, p).mean(), 1. / p)
     return wasserstein_distance
