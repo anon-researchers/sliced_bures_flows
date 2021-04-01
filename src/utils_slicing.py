@@ -19,7 +19,7 @@ class slicing:
             centers = projections
             X_projections = torch.sqrt(cost_matrix(X, centers * r)) # N x centers
             Y_projections = torch.sqrt(cost_matrix(Y, centers * r)) if Y is not None else None # N x centers
-        return X_projections, Y_projections, projections if proj_out else X_projections, Y_projections
+        return (X_projections, Y_projections, projections) if proj_out else (X_projections, Y_projections)
 
 def cost_matrix_slow(x, y):
     '''
