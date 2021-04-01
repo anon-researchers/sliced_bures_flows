@@ -7,7 +7,7 @@ class slicing:
     def __init__(self, stype='linear'):
         self.stype = stype
 
-    def get_slice(self, X, Y=None, projections=None, num_projections=1000, r=1, device='cuda'):
+    def get_slice(self, X, Y=None, projections=None, num_projections=1000, r=1, device='cuda', proj_out=False):
         if projections is None:
             assert(X.size(1)==Y.size(1))
             dim = X.size(1)
@@ -19,7 +19,7 @@ class slicing:
             centers = projections
             X_projections = torch.sqrt(cost_matrix(X, centers * r)) # N x centers
             Y_projections = torch.sqrt(cost_matrix(Y, centers * r)) if Y is not None else None # N x centers
-        return X_projections, Y_projections 
+        return X_projections, Y_projections, projections if proj_out else X_projections, Y_projections
 
 def cost_matrix_slow(x, y):
     '''
