@@ -29,7 +29,7 @@ class loss:
 
     def compute_sliced_distance(self, X, Y, weights=None, projections=None, num_projections=1000, r=1, device='cuda', proj_out=False):
         if proj_out:
-            X_projections, Y_projections, projections = self.slice.get_slice(X, Y, projections=projections, num_projections=num_projections, r=r, device=device, proj_out=proj_out)
+            X_projections, Y_projections, directions = self.slice.get_slice(X, Y, projections=projections, num_projections=num_projections, r=r, device=device, proj_out=proj_out)
         else:
             X_projections, Y_projections = self.slice.get_slice(X, Y, projections=projections, num_projections=num_projections, r=r, device=device, proj_out=proj_out)
         # print("X_proj={}".format(X_projections[:10]))
@@ -41,7 +41,7 @@ class loss:
         else:
             assert(weights is None)
             d = self.distance.compute(X_projections, Y_projections, 2)
-        return (d, X_projections, Y_projections, projections) if proj_out else d 
+        return (d, X_projections, Y_projections, directions) if proj_out else d 
 
     def compute_max_sliced_distance(self, X, Y, weights=None, projections=None, r=1, iter=100, device='cuda', proj_out=False):
         if projections is None:
