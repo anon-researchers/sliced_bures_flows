@@ -76,7 +76,7 @@ class loss:
         rho_Y = (Y.t()@Y).detach().cpu().numpy()
 
         w_bures_eig = max_sliced_bures_eig(rho_X, rho_Y)
-        w_bures = torch.from_numpy(w_bures_eig).t().float()
+        w_bures = torch.from_numpy(w_bures_eig).t().float().to(device)
         d = self.compute_sliced_distance(X, Y, weights=weights, projections=w_bures, r=r, device=device, proj_out=proj_out)
         return d
         
