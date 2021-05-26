@@ -6,6 +6,7 @@ import torch
 
 from scipy.sparse.linalg import eigsh
 from scipy.optimize import minimize_scalar
+import numpy as np
 # from torch import autograd
 class loss:
     
