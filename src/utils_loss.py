@@ -71,8 +71,8 @@ class loss:
         return d
     
     def compute_max_sliced_distance_eig(self, X, Y, weights=None, projections=None, r=1, iter=100, device='cuda', proj_out=False):
-        rho_X = (X@X.t()).detach().cpu().numpy()
-        rho_Y = (Y@Y.t()).detach().cpu().numpy()
+        rho_X = (X.t()@X).detach().cpu().numpy()
+        rho_Y = (Y.t()@Y).detach().cpu().numpy()
 
         w_bures_eig = max_sliced_bures_eig(rho_X, rho_Y)
         w_bures = torch.from_numpy(w_bures_eig).t().float()
