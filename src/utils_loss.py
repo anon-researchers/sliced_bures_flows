@@ -3,6 +3,9 @@ from utils_slicing import slicing
 from utils_distances import sliced_distance
 from utils import rand_projections
 import torch
+
+from scipy.sparse.linalg import eigsh
+from scipy.optimize import minimize_scalar
 # from torch import autograd
 class loss:
     
@@ -19,6 +22,8 @@ class loss:
             d = self.compute_sliced_distance(X, Y, weights=weights, projections=projections, num_projections=num_projections, r=r, device=device, proj_out=proj_out)
         elif self.ftype == 'max-sliced':
             d = self.compute_max_sliced_distance(X, Y, weights=weights, projections=projections, r=r, iter=iter, device=device, proj_out=proj_out)
+        elif self.ftype == 'max-sliced-eig':
+            d = self.compute_max_sliced_distance_eig(X, Y, weights=weights, projections=projections, r=r, iter=iter, device=device, proj_out=proj_out)
         elif self.ftype == 'distributional-sliced':
             d = self.compute_distributional_sliced_distance(X, Y, weights=weights, num_projections=num_projections, r=r, f=f, f_op=f_op, lam=lam, iter=iter, device=device, proj_out=proj_out)
         else:
@@ -65,6 +70,16 @@ class loss:
         d = self.compute_sliced_distance(X, Y, weights=weights, projections=theta, r=r, device=device, proj_out=proj_out)
         return d
     
+    def compute_max_sliced_distance_eig(self, X, Y, weights=None, projections=None, r=1, iter=100, device='cuda', proj_out=False):
+        rho_X = (X@X.t()).detach().cpu().numpy()
+        rho_Y = (Y@Y.t()).detach().cpu().numpy()
+
+        w_bures_eig = max_sliced_bures_eig(rho_X, rho_Y)
+        w_bures = torch.from_numpy(w_bures_eig).t().float()
+        d = self.compute_sliced_distance(X, Y, weights=weights, projections=w_bures, r=r, device=device, proj_out=proj_out)
+        return d
+        
+    
     def compute_distributional_sliced_distance(self, X, Y, weights=None, num_projections=1000, r=1, f=None, f_op=None, lam=1, iter=10, device='cuda', proj_out=False):
         dim = X.size(1)
         pro = rand_projections(dim, num_projections).to(device)
@@ -86,6 +101,33 @@ class loss:
         d = self.compute_sliced_distance(X, Y, weights=weights, projections=projections, r=r, device=device, proj_out=proj_out)
         # d = self.compute_sliced_distance(X_detach, Y_detach, weights=weights, projections=projections, r=r, device=device)
         return d
+    
+def one_side_bures_obj(w,rho_x,rho_y):
+    wXw = np.sqrt(np.max([0,w.T@rho_x@w]))
+    wYw = np.sqrt(np.max([0,w.T@rho_y@w]))
+    return (wXw - wYw)/np.sqrt(w.T@w)
+
+def one_sided_max_sliced_bures_eig(rho_x, rho_y):
+    sigmaI = 1e-7*np.identity(rho_x.shape[0])
+    eig_obj = lambda w : one_side_bures_obj(w, rho_x, rho_y)
+    get_eig = lambda gamma: eigsh(gamma*rho_x - rho_y - sigmaI , k=1, which='LA', maxiter=100)[1]
+    f = lambda gamma : -eig_obj(get_eig(gamma))
+    res = minimize_scalar(f, bounds=(1e-6, 1), method='bounded') 
+    gamma_star = res.x
+    w_star = get_eig(gamma_star)
+    w_star /= np.sqrt(w_star.T@w_star)
+    div = eig_obj(w_star)
+    return w_star
+
+def max_sliced_bures_eig(rho_x, rho_y):
+    w12 = one_sided_max_sliced_bures_eig(rho_x, rho_y)
+    w21 = one_sided_max_sliced_bures_eig(rho_y, rho_x)
+    obj12 =  one_side_bures_obj(w12,rho_x,rho_y)
+    obj21 =  one_side_bures_obj(w21,rho_x,rho_y)
+
+    if np.abs(obj12) < np.abs(obj21):
+        w12 = w21
+    return w12
 
 def cosine_distance_torch(x1, x2=None, eps=1e-8):
     x2 = x1 if x2 is None else x2
